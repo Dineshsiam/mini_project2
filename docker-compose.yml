@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: farmers_db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: farmers_schemes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    restart: always
+
+volumes:
+  pgdata:

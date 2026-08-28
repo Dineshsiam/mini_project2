@@ -1,0 +1,24 @@
+# Compiled Java Classes
+**/target/
+*.class
+
+# Node Modules and React production assets
+**/node_modules/
+**/dist/
+
+# IDE settings
+.idea/
+*.iml
+.vscode/
+.settings/
+.project/
+.classpath/
+.factorypath
+
+# OS files
+Thumbs.db
+db.properties
+.DS_Store
+
+# Logs
+*.log
