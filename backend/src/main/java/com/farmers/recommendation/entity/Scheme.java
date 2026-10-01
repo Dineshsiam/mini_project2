@@ -8,8 +8,10 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Data
@@ -83,4 +85,23 @@ public class Scheme {
     // We handle vector loading/searching through JDBC custom native SQL queries.
     @Transient
     private float[] embedding;
+
+    // ── Scheme metadata for RAG / sync ────────────────────────────────────────
+
+    @Column(name = "source_url", columnDefinition = "TEXT")
+    private String sourceUrl;
+
+    @Column(name = "last_scraped_at")
+    private OffsetDateTime lastScrapedAt;
+
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
+    @Column(length = 20)
+    @Builder.Default
+    private String status = "ACTIVE";
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "jsonb")
+    private Map<String, Object> translations;
 }

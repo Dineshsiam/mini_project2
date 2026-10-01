@@ -53,6 +53,20 @@
             <version>${langchain4j.version}</version>
         </dependency>
 
+        <!-- LangChain4j - Core -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
+        <!-- LangChain4j - OpenAI-compatible client (used for Groq) -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+
         <!-- Swagger/OpenAPI documentation -->
         <dependency>
             <groupId>org.springdoc</groupId>

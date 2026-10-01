@@ -6,6 +6,7 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Recommend from "./pages/Recommend";
 import Schemes from "./pages/Schemes";
+import ChatPage from "./pages/ChatPage";
 
 import {
   Target,
@@ -40,6 +41,9 @@ export default function App() {
 
       case "schemes":
         return <Schemes />;
+
+      case "chat":
+        return <ChatPage />;
 
       case "about":
         return <About />;
