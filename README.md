@@ -3,6 +3,7 @@
 This is an AI-powered hybrid recommendation system designed to match farmers to the most relevant government schemes.
 
 The system uses:
+
 1. **Offline Preprocessing (Python)**: Cleans 794 raw scraped scheme JSON files, extracts relevant fields, and generates semantic vector embeddings using `sentence-transformers/all-MiniLM-L6-v2`.
 2. **Database (PostgreSQL + `pgvector`)**: Stores clean scheme metadata and 384-dimensional vector embeddings, enabling fast vector cosine similarity search.
 3. **Backend API (Java / Spring Boot 3)**: Implements CRUD operations, keyword text search, and a **Hybrid Recommendation Engine** using Java local in-process embedding inference via **LangChain4j**. **No Python runtime dependencies are required.**
@@ -86,80 +87,30 @@ miniProject2/
 ## Setup and Running Instructions
 
 ### Prerequisite
-* Python 3.10+ (for offline preprocessing)
-* Docker & Docker Compose (for PostgreSQL + pgvector)
-* Java JDK 21 (for Spring Boot Backend)
-* Maven 3.9+ (for building backend)
 
----
+- Docker Desktop (or Docker Engine) with Docker Compose v2, running
+- `dataset/schemes_with_embeddings.json` generated and present in the repository
 
-### Step 1: Run Preprocessing & Generate Embeddings (Offline)
-First, install the offline Python dependencies and run the preprocessor.
+### Run the full application
 
-1. Navigate to the project root and install required packages:
-   ```bash
-   pip install sentence-transformers numpy
-   ```
-2. Run the text preprocessor to clean HTML/Markdown and extract fields:
-   ```bash
-   python preprocessing/preprocess.py
-   ```
-   *Output: `dataset/schemes.json` (794 clean schemes)*
+From the repository root, build and start PostgreSQL, the Spring Boot API, and the React frontend:
 
-3. Run the embedding generator to compute 384-dimensional vectors using `all-MiniLM-L6-v2`:
-   ```bash
-   python preprocessing/embedding.py
-   ```
-   *Output: `dataset/schemes_with_embeddings.json`*
+```bash
+docker compose up --build -d
+```
 
----
+Open **http://localhost:5173**. The API is available at **http://localhost:8080**, and Swagger UI at **http://localhost:8080/swagger-ui/index.html**. PostgreSQL is exposed on port `5433` for local tools.
 
-### Step 2: Spin Up PostgreSQL Database with `pgvector`
-We use Docker to spin up PostgreSQL and enable the vector database features.
+The backend image builds with Java 21, Compose waits for PostgreSQL to become healthy, and the frontend's Nginx server forwards `/api` requests to the backend container. On first boot, the backend seeds an empty database from the precomputed embeddings dataset.
 
-1. Start the container in the background:
-   ```bash
-   docker-compose up -d
-   ```
-2. This starts a container named `farmers_db` at port `5432` and automatically initializes the database schema defined in `database/schema.sql`.
+To inspect startup output or stop the services:
 
----
+```bash
+docker compose logs -f
+docker compose down
+```
 
-### Step 3: Run the Spring Boot API Backend
-1. Navigate to the `backend/` directory:
-   ```bash
-   cd backend
-   ```
-2. Build the application and run unit tests:
-   ```bash
-   mvn clean test
-   ```
-3. Run the Spring Boot application:
-   ```bash
-   mvn spring-boot:run
-   ```
-4. **Automatic Seeding**: On first boot, if the database is empty, the application will automatically read the precomputed `dataset/schemes_with_embeddings.json` and seed all 794 schemes into PostgreSQL.
-
----
-
-### Step 4: Run the React Frontend Application
-1. Navigate to the `frontend/` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install the frontend dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite local development server:
-   ```bash
-   npm run dev
-   ```
-4. Open your web browser and navigate to: **`http://localhost:5173`**
-5. (Optional) To build the optimized production assets:
-   ```bash
-   npm run build
-   ```
+To generate the dataset from source, install Python 3.10+ with `sentence-transformers` and `numpy`, then run `preprocessing/preprocess.py` followed by `preprocessing/embedding.py` from the repository root.
 
 ---
 
@@ -171,8 +122,9 @@ Access it at: **`http://localhost:8080/swagger-ui/index.html`**
 ### User REST Endpoints
 
 #### 1. Get Recommendations
-* **Endpoint**: `POST /api/recommend`
-* **Request Payload**:
+
+- **Endpoint**: `POST /api/recommend`
+- **Request Payload**:
   ```json
   {
     "state": "Tamil Nadu",
@@ -187,7 +139,7 @@ Access it at: **`http://localhost:8080/swagger-ui/index.html`**
     "keywords": "drip irrigation"
   }
   ```
-* **Response Payload (Top 5 Hybrid recommendations)**:
+- **Response Payload (Top 5 Hybrid recommendations)**:
   ```json
   [
     {
@@ -204,38 +156,46 @@ Access it at: **`http://localhost:8080/swagger-ui/index.html`**
   ```
 
 #### 2. Get All Schemes
-* **Endpoint**: `GET /api/schemes`
-* **Description**: Returns all 794 schemes.
+
+- **Endpoint**: `GET /api/schemes`
+- **Description**: Returns all 794 schemes.
 
 #### 3. Get Scheme Details
-* **Endpoint**: `GET /api/schemes/{id}`
-* **Description**: Retrieves details for a specific scheme by UUID.
+
+- **Endpoint**: `GET /api/schemes/{id}`
+- **Description**: Retrieves details for a specific scheme by UUID.
 
 #### 4. Keyword Text Search
-* **Endpoint**: `GET /api/schemes/search?keyword=goat`
-* **Description**: Searches scheme name, description, benefits, and eligibility fields for the keyword.
+
+- **Endpoint**: `GET /api/schemes/search?keyword=goat`
+- **Description**: Searches scheme name, description, benefits, and eligibility fields for the keyword.
 
 ---
 
 ### Admin REST Endpoints
 
 #### 1. Create a Scheme (Recalculates Embedding dynamically in Java)
-* **Endpoint**: `POST /api/admin/scheme`
-* **Description**: Admin creates a new scheme. Embedding is generated on-the-fly in Spring Boot.
+
+- **Endpoint**: `POST /api/admin/scheme`
+- **Description**: Admin creates a new scheme. Embedding is generated on-the-fly in Spring Boot.
 
 #### 2. Update a Scheme
-* **Endpoint**: `PUT /api/admin/scheme/{id}`
+
+- **Endpoint**: `PUT /api/admin/scheme/{id}`
 
 #### 3. Delete a Scheme
-* **Endpoint**: `DELETE /api/admin/scheme/{id}`
+
+- **Endpoint**: `DELETE /api/admin/scheme/{id}`
 
 #### 4. Reload Schemes from Seeding File
-* **Endpoint**: `POST /api/admin/reload`
-* **Description**: Clears the database and re-seeds it from `dataset/schemes_with_embeddings.json`.
+
+- **Endpoint**: `POST /api/admin/reload`
+- **Description**: Clears the database and re-seeds it from `dataset/schemes_with_embeddings.json`.
 
 #### 5. Get Database Statistics
-* **Endpoint**: `GET /api/admin/statistics`
-* **Description**: Returns aggregated numbers for central vs state level, category breakdowns, and states.
+
+- **Endpoint**: `GET /api/admin/statistics`
+- **Description**: Returns aggregated numbers for central vs state level, category breakdowns, and states.
 
 ---
 
@@ -246,8 +206,8 @@ The **Recommendation Engine** (`RecommendationEngine.java`) utilizes a **Hybrid 
 1. **Farmer Profile Embedding**: Converts the input profile into a text document and generates a 384-d vector embedding using LangChain4j.
 2. **Vector Candidate Fetching**: Queries PostgreSQL's `pgvector` table using Cosine similarity (`<=>`) to fetch the top 50 closest semantic matches.
 3. **Rule-Based Checking**: Checks hard constraints (State, Gender) and soft constraints (Income, Land limits, SC/ST categories, Disability, Keyword matches) for each candidate.
-   * State mismatch or gender mismatch immediately rejects the candidate (Rule Score = 0.0).
-   * SC/ST categories, BPL status, small land holding, and search query keywords give rule boosts.
+   - State mismatch or gender mismatch immediately rejects the candidate (Rule Score = 0.0).
+   - SC/ST categories, BPL status, small land holding, and search query keywords give rule boosts.
 4. **Hybrid Score Calculation**:
    $$\text{Final Score} = 0.7 \times (\text{Rule Score} \times 100) + 0.3 \times (\text{Cosine Similarity} \times 100)$$
 5. **Ranking**: Results are sorted in descending order of final score, returning the Top 5 recommended schemes.
